@@ -284,4 +284,13 @@ impl<T: CommandDescriptor> Command<T> {
         raw.push(self.checksum);
         raw
     }
+
+    /// Returns a reference to the data payload.
+    ///
+    /// # Returns
+    ///
+    /// A slice containing the data payload.
+    pub fn data(&self) -> &[u8] {
+        &self.data
+    }
 }
