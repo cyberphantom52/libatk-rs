@@ -4,3 +4,4 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+atk-command-derive = { git = "https://github.com/cyberphantom52/atk-command-derive.git" }

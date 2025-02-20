@@ -1,14 +1,8 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
+pub mod command;
+pub mod types;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
+pub mod prelude {
+    pub use crate::command::{Command, CommandDescriptor};
+    pub use crate::types::{CommandId, EEPROMAddress};
+    pub use atk_command_derive::CommandDescriptor;
 }
