@@ -6,5 +6,5 @@ pub mod prelude {
     pub use crate::command::{Command, CommandDescriptor};
     pub use crate::device::Device;
     pub use crate::types::{CommandId, EEPROMAddress};
-    pub use atk_command_derive::CommandDescriptor;
+    pub use libatk_derive::CommandDescriptor;
 }

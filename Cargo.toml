@@ -9,7 +9,7 @@ readme = "README.md"
 license-file = "LICENSE"
 
 [dependencies]
-atk-command-derive = { git = "https://github.com/cyberphantom52/atk-command-derive.git" }
 hidapi = { version = "2.6.3", default-features = false, features = [
     "linux-shared-hidraw",
 ] }
+libatk-derive = "0.1.0"

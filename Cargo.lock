@@ -3,16 +3,6 @@
 version = 4
 
 [[package]]
-name = "atk-command-derive"
-version = "0.1.0"
-source = "git+https://github.com/cyberphantom52/atk-command-derive.git#7f1876d39b18e253735f0de8dcb238ab2e26407d"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
 name = "cc"
 version = "1.2.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -41,11 +31,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "libatk-derive"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "921850e3538db0dae38946419e71e276d07bf7ef24428e73350c5fc3590d304c"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "libatk-rs"
 version = "0.1.0"
 dependencies = [
- "atk-command-derive",
  "hidapi",
+ "libatk-derive",
 ]
 
 [[package]]
