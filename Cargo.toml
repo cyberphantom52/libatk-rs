@@ -5,3 +5,6 @@ edition = "2021"
 
 [dependencies]
 atk-command-derive = { git = "https://github.com/cyberphantom52/atk-command-derive.git" }
+hidapi = { version = "2.6.3", default-features = false, features = [
+    "linux-shared-hidraw",
+] }
