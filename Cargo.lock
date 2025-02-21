@@ -32,9 +32,9 @@ dependencies = [
 
 [[package]]
 name = "libatk-derive"
-version = "0.1.0"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "921850e3538db0dae38946419e71e276d07bf7ef24428e73350c5fc3590d304c"
+checksum = "e839960ae497c5f78083d310067c12d3e3b18a76c612fd6521523d0b3f73b46e"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -43,7 +43,7 @@ dependencies = [
 
 [[package]]
 name = "libatk-rs"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "hidapi",
  "libatk-derive",
