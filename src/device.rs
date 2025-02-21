@@ -145,4 +145,30 @@ impl Device {
         // Remove Report ID from the response
         Ok(buf[1..bytes_read].to_vec())
     }
+
+    /// Executes a command by sending it to the device and reading the response.
+    ///
+    /// This is a safe wrapper around the `send` and `read` as it ensures that the returned command type is same as the input command type.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(Command<T>)` if the command execution is successful.
+    /// * `Err(hidapi::HidError)` if the command execution fails.
+    ///
+    /// # Examples
+    /// ```no_run
+    /// let response = device.execute(command).expect("Failed to execute command");
+    /// println!("Response: {:?}", response);
+    /// ```
+    pub fn execute<T: CommandDescriptor>(
+        &self,
+        command: Command<T>,
+    ) -> Result<Command<T>, hidapi::HidError> {
+        self.send(command)?;
+        let response = self.read()?;
+
+        Command::try_from(response.as_ref()).map_err(|e| hidapi::HidError::HidApiError {
+            message: format!("Failed to convert response to command: {}", e),
+        })
+    }
 }
