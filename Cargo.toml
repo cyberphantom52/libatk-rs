@@ -1,6 +1,6 @@
 [package]
 name = "libatk-rs"
-version = "0.1.3"
+version = "0.1.4"
 edition = "2021"
 description = "Rust library that implements the Atk devices protocol."
 homepage = "https://github.com/cyberphantom52/libatk-rs/"
@@ -12,4 +12,4 @@ license-file = "LICENSE"
 hidapi = { version = "2.6.3", default-features = false, features = [
     "linux-shared-hidraw",
 ] }
-libatk-derive = "0.1.0"
+libatk-derive = "0.1.2"

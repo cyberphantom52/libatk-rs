@@ -293,3 +293,17 @@ impl<T: CommandDescriptor> Command<T> {
         &self.data
     }
 }
+
+pub struct CommandBuilder<T: CommandDescriptor> {
+    pub command: Command<T>,
+}
+
+impl<T: CommandDescriptor> CommandBuilder<T> {
+    pub fn new(command: Command<T>) -> Self {
+        Self { command }
+    }
+
+    pub fn build(self) -> Command<T> {
+        self.command
+    }
+}
