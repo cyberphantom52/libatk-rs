@@ -281,6 +281,9 @@ impl<T: CommandDescriptor> Command<T> {
         raw.extend_from_slice(&(self.eeprom_address as u16).to_be_bytes());
         raw.push(self.data_len as u8);
         raw.extend_from_slice(&self.data);
+        // Pad the remaining bytes with zeroes
+        let remaining = T::cmd_len() - raw.len() - 1;
+        raw.extend_from_slice(&vec![0u8; remaining]);
         raw.push(self.checksum);
         raw
     }
