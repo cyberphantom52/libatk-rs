@@ -1,5 +1,6 @@
 use crate::types::{CommandId, EEPROMAddress};
 
+static BASE_OFFSET: usize = 0x5;
 /// A trait that defines certain properties for command types.
 ///
 /// Implementors of this trait must provide:
@@ -7,11 +8,6 @@ use crate::types::{CommandId, EEPROMAddress};
 /// - The report ID used for calculating checksums.
 /// - The total length of the command (in bytes).
 pub trait CommandDescriptor {
-    /// Returns the offset of the first byte of the data field.
-    ///
-    /// The offset is used when extracting or modifying the data payload.
-    fn base_offset() -> usize;
-
     /// Returns the report ID as a u8.
     ///
     /// The report ID is used when calculating the command checksum.
@@ -88,7 +84,7 @@ impl<T: CommandDescriptor> Default for Command<T> {
             status: 0,
             eeprom_address: EEPROMAddress::ReportRate,
             data_len: 0,
-            data: vec![0u8; T::cmd_len() - T::base_offset() - 1],
+            data: vec![0u8; T::cmd_len() - BASE_OFFSET - 1],
             checksum: 0,
             _cmd: std::marker::PhantomData,
         }
@@ -111,7 +107,7 @@ impl<T: CommandDescriptor> TryFrom<&[u8]> for Command<T> {
         let status = raw[0x1];
         let eeprom_address = u16::from_be_bytes([raw[0x2], raw[0x3]]).into();
         let data_len = raw[0x4] as usize;
-        let data = raw[T::base_offset()..T::base_offset() + data_len].to_vec();
+        let data = raw[BASE_OFFSET..BASE_OFFSET + data_len].to_vec();
         let checksum = raw[0xf];
 
         Ok(Self {
@@ -241,7 +237,7 @@ impl<T: CommandDescriptor> Command<T> {
     /// Panics if the provided length exceeds the maximum available space computed via:
     /// `T::cmd_len() - T::base_offset()`
     pub fn set_data_len(&mut self, len: usize) {
-        if len as usize > T::cmd_len() - T::base_offset() {
+        if len as usize > T::cmd_len() - BASE_OFFSET {
             panic!("Invalid data length");
         }
 
