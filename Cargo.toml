@@ -12,4 +12,4 @@ license-file = "LICENSE"
 hidapi = { version = "2.6.3", default-features = false, features = [
     "linux-shared-hidraw",
 ] }
-libatk-derive = "0.1.3"
+libatk-derive = "0.1.4"
