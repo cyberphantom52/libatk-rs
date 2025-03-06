@@ -1,3 +1,55 @@
+#[derive(Debug)]
+pub enum Error {
+    InvalidBufferLength {
+        expected: usize,
+        actual: usize,
+    },
+    InvalidCommandId(u8),
+    InvalidEEPROMAddress(u16),
+    DataTooLarge(usize),
+    InvalidDataLength {
+        offset: usize,
+        data_len: usize,
+        allowed: usize,
+    },
+    InvalidOffset(usize),
+    OffsetNotAligned(usize),
+    HidError(hidapi::HidError),
+    ParseError(String),
+}
+
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let message = match self {
+            Error::InvalidBufferLength { expected, actual } => {
+                format!(
+                    "Invalid buffer length: expected {}, got {}",
+                    expected, actual
+                )
+            }
+            Error::InvalidCommandId(id) => format!("Invalid CommandID: {}", id),
+            Error::InvalidEEPROMAddress(addr) => format!("Invalid EEPROM Address: {}", addr),
+            Error::InvalidOffset(offset) => format!("Invalid Offset: {}", offset),
+            Error::HidError(e) => e.to_string(),
+            Error::DataTooLarge(len) => format!("Length is larger than the maximum possible: {}", len),
+            Error::InvalidDataLength {
+                offset,
+                data_len,
+                allowed,
+            } => format!("Invalid data len: Tried to write {} bytes, Only {} bytes can be written at offset {}, ", data_len, allowed, offset),
+            Error::OffsetNotAligned(offset) => format!(
+                "Provided offset is not aligned to a byte pair boundary: {}",
+                offset
+            ),
+            Error::ParseError(e) => e.clone(),
+        };
+
+        write!(f, "{}", message)
+    }
+}
+
+impl std::error::Error for Error {}
+
 #[repr(u8)]
 #[derive(Debug, Clone, Copy)]
 #[allow(dead_code)]
@@ -34,11 +86,12 @@ pub enum CommandId {
     ReportMouseUpgradeStatus,
 }
 
-impl From<u8> for CommandId {
-    fn from(value: u8) -> Self {
+impl TryFrom<u8> for CommandId {
+    type Error = Error;
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
-            0x0..=0x1b => unsafe { std::mem::transmute(value) },
-            _ => panic!("Invalid CommandId: 0x{:X}", value),
+            0x0..=0x1b => unsafe { Ok(std::mem::transmute(value)) },
+            _ => Err(Error::InvalidCommandId(value)),
         }
     }
 }
@@ -165,8 +218,9 @@ pub enum EEPROMAddress {
     Macro15 = 0x1980,
 }
 
-impl From<u16> for EEPROMAddress {
-    fn from(value: u16) -> Self {
+impl TryFrom<u16> for EEPROMAddress {
+    type Error = Error;
+    fn try_from(value: u16) -> Result<Self, Self::Error> {
         match value {
             0x0 | 0x1 | 0x2 | 0x3 | 0x4 | 0x5 | 0xa | 0xb | 0xc | 0x14 | 0x1c | 0x24 | 0x2c
             | 0x34 | 0x3c | 0x44 | 0x4c | 0x4d | 0x4e | 0x4f | 0x50 | 0x51 | 0x52 | 0x53 | 0x54
@@ -177,8 +231,8 @@ impl From<u16> for EEPROMAddress {
             | 0x100 | 0x120 | 0x140 | 0x160 | 0x180 | 0x1a0 | 0x1c0 | 0x1e0 | 0x200 | 0x220
             | 0x240 | 0x260 | 0x280 | 0x2a0 | 0x2c0 | 0x2e0 | 0x300 | 0x480 | 0x600 | 0x780
             | 0x900 | 0xa80 | 0xc00 | 0xd80 | 0xf00 | 0x1080 | 0x1200 | 0x1380 | 0x1500
-            | 0x1680 | 0x1800 | 0x1980 => unsafe { std::mem::transmute(value) },
-            _ => panic!("Invalid EEPROMAddress: 0x{:X}", value),
+            | 0x1680 | 0x1800 | 0x1980 => unsafe { Ok(std::mem::transmute(value)) },
+            _ => Err(Error::InvalidEEPROMAddress(value)),
         }
     }
 }

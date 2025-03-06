@@ -1,5 +1,5 @@
 use crate::device::REPORT_ID;
-use crate::types::{CommandId, EEPROMAddress};
+use crate::types::{CommandId, EEPROMAddress, Error};
 
 // These are hardcoded for now as i don't know if there are other devices with different values.
 // If that is the case then these can be set dynamically
@@ -81,20 +81,19 @@ impl<T: CommandDescriptor> Default for Command<T> {
 }
 
 impl<T: CommandDescriptor> TryFrom<&[u8]> for Command<T> {
-    type Error = String;
+    type Error = Error;
 
     fn try_from(raw: &[u8]) -> Result<Self, Self::Error> {
         if raw.len() != CMD_LEN {
-            return Err(format!(
-                "Invalid buffer length: expected {}, got {}",
-                CMD_LEN,
-                raw.len()
-            ));
+            return Err(Error::InvalidBufferLength {
+                expected: CMD_LEN,
+                actual: raw.len(),
+            });
         }
 
-        let command_id = raw[0x0].into();
+        let command_id = raw[0x0].try_into()?;
         let status = raw[0x1];
-        let eeprom_address = u16::from_be_bytes([raw[0x2], raw[0x3]]).into();
+        let eeprom_address = u16::from_be_bytes([raw[0x2], raw[0x3]]).try_into()?;
         let data_len = raw[0x4] as usize;
         let data = raw[BASE_OFFSET..BASE_OFFSET + data_len].to_vec();
         let checksum = raw[0xf];
@@ -122,10 +121,14 @@ impl<T: CommandDescriptor> Command<T> {
     /// # Returns
     ///
     /// * `Ok(())` if the data is set successfully.
-    /// * `Err(&'static str)` if the provided data length plus offset exceeds the valid data length.
-    pub fn set_data(&mut self, data: &[u8], offset: usize) -> Result<(), &'static str> {
+    /// * `Err(Error::InvalidDataLength)` if the provided data length plus offset exceeds the valid data length.
+    pub fn set_data(&mut self, data: &[u8], offset: usize) -> Result<(), Error> {
         if offset + data.len() > self.data_len() {
-            return Err("Invalid data length");
+            return Err(Error::InvalidDataLength {
+                offset,
+                data_len: data.len(),
+                allowed: self.data_len(),
+            });
         }
 
         self.data[offset..offset + data.len()].copy_from_slice(data);
@@ -143,10 +146,10 @@ impl<T: CommandDescriptor> Command<T> {
     /// # Returns
     ///
     /// * `Ok(())` if the value is successfully set.
-    /// * `Err(&'static str)` if the offset is out of bounds.
-    pub fn set_data_byte(&mut self, value: u8, offset: usize) -> Result<(), &'static str> {
+    /// * `Err(Error::InvalidOffset)` if the offset is out of bounds.
+    pub fn set_data_byte(&mut self, value: u8, offset: usize) -> Result<(), Error> {
         if offset > self.data_len() - 1 {
-            return Err("Provided offset is greater than the length of the data payload");
+            return Err(Error::InvalidOffset(offset));
         }
 
         self.data[offset] = value;
@@ -168,13 +171,9 @@ impl<T: CommandDescriptor> Command<T> {
     ///
     /// * `Ok(())` if the operation is successful.
     /// * `Err(&'static str)` if the offset is not aligned (not even) or out of bounds.
-    pub fn set_data_byte_with_checksum(
-        &mut self,
-        value: u8,
-        offset: usize,
-    ) -> Result<(), &'static str> {
+    pub fn set_data_byte_with_checksum(&mut self, value: u8, offset: usize) -> Result<(), Error> {
         if offset % 2 != 0 {
-            return Err("Provided offset is not aligned to a byte pair boundary");
+            return Err(Error::OffsetNotAligned(offset));
         }
 
         self.set_data_byte(value, offset)?;
@@ -224,14 +223,15 @@ impl<T: CommandDescriptor> Command<T> {
     /// # Panics
     ///
     /// Panics if the provided length exceeds the maximum available space computed via:
-    /// `CMD_LEN - T::base_offset()`
-    pub fn set_data_len(&mut self, len: usize) {
+    /// `CMD_LEN - BASE_OFFSET`
+    pub fn set_data_len(&mut self, len: usize) -> Result<(), Error> {
         if len as usize > CMD_LEN - BASE_OFFSET {
-            panic!("Invalid data length");
+            return Err(Error::DataTooLarge(len));
         }
 
         self.data_len = len;
         self.set_checksum();
+        Ok(())
     }
 
     fn set_checksum(&mut self) {
