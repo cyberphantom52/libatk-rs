@@ -1,6 +1,7 @@
 use crate::command::{Command, CommandDescriptor};
 use hidapi::HidDevice;
 
+pub static REPORT_ID: u8 = 0x8;
 static MAX_REPORT_LENGTH: usize = 64;
 
 /// A wrapper around a HID device that simplifies communication by exposing functionality for sending commands
@@ -119,7 +120,7 @@ impl Device {
         command: Command<T>,
     ) -> Result<usize, hidapi::HidError> {
         // Prepend Report ID to the command
-        let data = [[T::report_id()].as_ref(), command.as_bytes().as_ref()].concat();
+        let data = [[REPORT_ID].as_ref(), command.as_bytes().as_ref()].concat();
         self.0.write(&data)
     }
 

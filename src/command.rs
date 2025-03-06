@@ -1,32 +1,21 @@
+use crate::device::REPORT_ID;
 use crate::types::{CommandId, EEPROMAddress};
 
+// These are hardcoded for now as i don't know if there are other devices with different values.
+// If that is the case then these can be set dynamically
+/// Represents the offset from the start of the command to the first byte of the data field
 static BASE_OFFSET: usize = 0x5;
-/// A trait that defines certain properties for command types.
-///
-/// Implementors of this trait must provide:
-/// - The offset within the command buffer where the data field starts.
-/// - The report ID used for calculating checksums.
-/// - The total length of the command (in bytes).
-pub trait CommandDescriptor {
-    /// Returns the report ID as a u8.
-    ///
-    /// The report ID is used when calculating the command checksum.
-    fn report_id() -> u8;
+static CMD_LEN: usize = 0x10;
 
-    /// Returns the total length (in bytes) of the command.
-    fn cmd_len() -> usize;
-}
+/// A trait that allows to define new commands
+pub trait CommandDescriptor {}
 
 /*
 The command layout is as follows:
-
 ┌────────────┬───────────────┬────────────────┬───────────────────┬──────────────┬──────────┐
 │ Command ID │ Command Status│ EEPROM Address │ Data Valid Length │     Data     │ Checksum │
 │   1 Byte   │    1 Byte     │   2 Bytes      │      1 Byte       │  10 Bytes    │  1 Byte  │
 └────────────┴───────────────┴────────────────┴───────────────────┴──────────────┴──────────┘
-
-Note:
-- `base_offset` represents the offset from the start of the command to the beginning of the data field.
 */
 
 /// A generic command that stores the various fields (header, data payload, checksum)
@@ -84,7 +73,7 @@ impl<T: CommandDescriptor> Default for Command<T> {
             status: 0,
             eeprom_address: EEPROMAddress::ReportRate,
             data_len: 0,
-            data: vec![0u8; T::cmd_len() - BASE_OFFSET - 1],
+            data: vec![0u8; CMD_LEN - BASE_OFFSET - 1],
             checksum: 0,
             _cmd: std::marker::PhantomData,
         }
@@ -95,10 +84,10 @@ impl<T: CommandDescriptor> TryFrom<&[u8]> for Command<T> {
     type Error = String;
 
     fn try_from(raw: &[u8]) -> Result<Self, Self::Error> {
-        if raw.len() != T::cmd_len() {
+        if raw.len() != CMD_LEN {
             return Err(format!(
                 "Invalid buffer length: expected {}, got {}",
-                T::cmd_len(),
+                CMD_LEN,
                 raw.len()
             ));
         }
@@ -235,9 +224,9 @@ impl<T: CommandDescriptor> Command<T> {
     /// # Panics
     ///
     /// Panics if the provided length exceeds the maximum available space computed via:
-    /// `T::cmd_len() - T::base_offset()`
+    /// `CMD_LEN - T::base_offset()`
     pub fn set_data_len(&mut self, len: usize) {
-        if len as usize > T::cmd_len() - BASE_OFFSET {
+        if len as usize > CMD_LEN - BASE_OFFSET {
             panic!("Invalid data length");
         }
 
@@ -247,7 +236,7 @@ impl<T: CommandDescriptor> Command<T> {
 
     fn set_checksum(&mut self) {
         let sum: u8 = {
-            let mut sum = T::report_id() as u16;
+            let mut sum = REPORT_ID as u16;
             sum += self.command_id as u16;
             sum += self.status as u16;
             sum += self.eeprom_address as u16;
@@ -278,7 +267,7 @@ impl<T: CommandDescriptor> Command<T> {
         raw.push(self.data_len as u8);
         raw.extend_from_slice(&self.data);
         // Pad the remaining bytes with zeroes
-        let remaining = T::cmd_len() - raw.len() - 1;
+        let remaining = CMD_LEN - raw.len() - 1;
         raw.extend_from_slice(&vec![0u8; remaining]);
         raw.push(self.checksum);
         raw
