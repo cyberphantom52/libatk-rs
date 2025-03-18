@@ -1,4 +1,7 @@
-use crate::command::{Command, CommandDescriptor};
+use crate::{
+    command::{Command, CommandDescriptor},
+    types::Error,
+};
 use hidapi::HidDevice;
 
 pub static REPORT_ID: u8 = 0x8;
@@ -70,7 +73,7 @@ impl Device {
         product_id: u16,
         usage_page: u16,
         usage: u16,
-    ) -> Result<Self, hidapi::HidError> {
+    ) -> Result<Self, Error> {
         let context = hidapi::HidApi::new().unwrap();
 
         let device = context
@@ -82,14 +85,18 @@ impl Device {
                     && d.usage() == usage
             })
             .next()
-            .ok_or(hidapi::HidError::HidApiError {
+            .ok_or(Error::HidError(hidapi::HidError::HidApiError {
                 message: format!(
                     "Device not found: vendor_id={} product_id={} usage_page={} usage={}",
                     vendor_id, product_id, usage_page, usage
                 ),
-            })?;
+            }))?;
 
-        Ok(Device(device.open_device(&context)?))
+        Ok(Device(
+            device
+                .open_device(&context)
+                .map_err(|e| Error::HidError(e))?,
+        ))
     }
 
     /// Sends a command to the device.
@@ -115,13 +122,10 @@ impl Device {
     /// let bytes_written = device.send(command).expect("Failed to send command");
     /// println!("Bytes written: {}", bytes_written);
     /// ```
-    pub fn send<T: CommandDescriptor>(
-        &self,
-        command: Command<T>,
-    ) -> Result<usize, hidapi::HidError> {
+    pub fn send<T: CommandDescriptor>(&self, command: Command<T>) -> Result<usize, Error> {
         // Prepend Report ID to the command
         let data = [[REPORT_ID].as_ref(), command.as_bytes().as_ref()].concat();
-        self.0.write(&data)
+        self.0.write(&data).map_err(|e| Error::HidError(e))
     }
 
     /// Reads data from the device.
@@ -139,9 +143,9 @@ impl Device {
     /// let response = device.read().expect("Failed to read from device");
     /// println!("Response: {:?}", response);
     /// ```
-    pub fn read(&self) -> Result<Vec<u8>, hidapi::HidError> {
+    pub fn read(&self) -> Result<Vec<u8>, Error> {
         let mut buf = [0u8; MAX_REPORT_LENGTH];
-        let bytes_read = self.0.read(&mut buf)?;
+        let bytes_read = self.0.read(&mut buf).map_err(|e| Error::HidError(e))?;
 
         // Remove Report ID from the response
         Ok(buf[1..bytes_read].to_vec())
@@ -161,15 +165,10 @@ impl Device {
     /// let response = device.execute(command).expect("Failed to execute command");
     /// println!("Response: {:?}", response);
     /// ```
-    pub fn execute<T: CommandDescriptor>(
-        &self,
-        command: Command<T>,
-    ) -> Result<Command<T>, hidapi::HidError> {
+    pub fn execute<T: CommandDescriptor>(&self, command: Command<T>) -> Result<Command<T>, Error> {
         self.send(command)?;
         let response = self.read()?;
 
-        Command::try_from(response.as_ref()).map_err(|e| hidapi::HidError::HidApiError {
-            message: format!("Failed to convert response to command: {}", e),
-        })
+        Command::try_from(response.as_ref())
     }
 }
