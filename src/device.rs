@@ -169,6 +169,6 @@ impl Device {
         self.send(&command)?;
         let response = self.read()?;
 
-        Command::try_from(response.as_ref())
+        Command::try_from(response)
     }
 }

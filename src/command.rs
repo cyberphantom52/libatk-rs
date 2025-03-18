@@ -80,6 +80,14 @@ impl<T: CommandDescriptor> Default for Command<T> {
     }
 }
 
+impl<T: CommandDescriptor> TryFrom<Vec<u8>> for Command<T> {
+    type Error = Error;
+
+    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
+        Command::try_from(value.as_ref())
+    }
+}
+
 impl<T: CommandDescriptor> TryFrom<&[u8]> for Command<T> {
     type Error = Error;
 
@@ -291,7 +299,7 @@ impl<T: CommandDescriptor> Command<T> {
         device.send(self)?;
 
         let response = device.read()?;
-        Command::try_from(response.as_ref())
+        Command::try_from(response)
     }
 }
 
