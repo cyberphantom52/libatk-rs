@@ -122,7 +122,7 @@ impl Device {
     /// let bytes_written = device.send(command).expect("Failed to send command");
     /// println!("Bytes written: {}", bytes_written);
     /// ```
-    pub fn send<T: CommandDescriptor>(&self, command: Command<T>) -> Result<usize, Error> {
+    pub fn send<T: CommandDescriptor>(&self, command: &Command<T>) -> Result<usize, Error> {
         // Prepend Report ID to the command
         let data = [[REPORT_ID].as_ref(), command.as_bytes().as_ref()].concat();
         self.0.write(&data).map_err(|e| Error::HidError(e))
@@ -166,7 +166,7 @@ impl Device {
     /// println!("Response: {:?}", response);
     /// ```
     pub fn execute<T: CommandDescriptor>(&self, command: Command<T>) -> Result<Command<T>, Error> {
-        self.send(command)?;
+        self.send(&command)?;
         let response = self.read()?;
 
         Command::try_from(response.as_ref())

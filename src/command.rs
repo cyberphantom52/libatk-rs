@@ -281,6 +281,18 @@ impl<T: CommandDescriptor> Command<T> {
     pub fn data(&self) -> &[u8] {
         &self.data
     }
+
+    /// Executes the command on the specified device.
+    ///
+    /// # Returns
+    ///
+    /// Response of the command
+    pub fn execute(&self, device: &crate::device::Device) -> Result<Command<T>, Error> {
+        device.send(self)?;
+
+        let response = device.read()?;
+        Command::try_from(response.as_ref())
+    }
 }
 
 pub struct CommandBuilder<T: CommandDescriptor> {
