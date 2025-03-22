@@ -43,7 +43,7 @@ dependencies = [
 
 [[package]]
 name = "libatk-rs"
-version = "0.1.9"
+version = "0.1.10"
 dependencies = [
  "hidapi",
  "libatk-derive",

@@ -1,6 +1,6 @@
 [package]
 name = "libatk-rs"
-version = "0.1.9"
+version = "0.1.10"
 edition = "2021"
 description = "Rust library that implements the Atk devices protocol."
 homepage = "https://github.com/cyberphantom52/libatk-rs/"

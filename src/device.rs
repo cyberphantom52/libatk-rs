@@ -30,7 +30,15 @@ static MAX_REPORT_LENGTH: usize = 64;
 /// let response = device.read().expect("Failed to read response");
 /// println!("Response: {:?}", response);
 /// ```
+#[derive(Debug)]
 pub struct Device(HidDevice);
+
+impl std::ops::Deref for Device {
+    type Target = HidDevice;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 impl std::fmt::Display for Device {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
