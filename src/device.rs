@@ -4,8 +4,8 @@ use crate::{
 };
 use hidapi::HidDevice;
 
-pub static REPORT_ID: u8 = 0x8;
-static MAX_REPORT_LENGTH: usize = 64;
+pub const REPORT_ID: u8 = 0x8;
+const MAX_REPORT_LENGTH: usize = 64;
 
 /// A wrapper around a HID device that simplifies communication by exposing functionality for sending commands
 /// and reading responses.

@@ -4,8 +4,8 @@ use crate::types::{CommandId, EEPROMAddress, Error};
 // These are hardcoded for now as i don't know if there are other devices with different values.
 // If that is the case then these can be set dynamically
 /// Represents the offset from the start of the command to the first byte of the data field
-static BASE_OFFSET: usize = 0x5;
-static CMD_LEN: usize = 0x10;
+const BASE_OFFSET: usize = 0x5;
+const CMD_LEN: usize = 0x10;
 
 /// A trait that allows to define new commands
 pub trait CommandDescriptor {}
